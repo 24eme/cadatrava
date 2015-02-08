@@ -39,12 +39,10 @@ PARCELLE_SUPERFICIE=$(grep "tres carr" /tmp/parcellaire.$$.html  | sed 's/[^0-9]
 echo $PARCELLE_REF $PARCELLE_SUPERFICIE	$PARCELLE_ID 
 #Convertion de la parcelle en un polygone rouge
 convert $PARCELLE_ID.png -compress none $PARCELLE_ID"_"$PARCELLE_BBOX.ppm
-convert $PARCELLE_ID"_"$PARCELLE_BBOX.ppm -fill red -fuzz 75% -draw 'color '$(perl bin/centerit.pl < $PARCELLE_ID"_"$PARCELLE_BBOX.ppm)' floodfill' -compress none  $PARCELLE_ID"_"$PARCELLE_BBOX.filled.ppm
+convert $PARCELLE_ID"_"$PARCELLE_BBOX.ppm -fill red -fuzz 50% -draw 'color '$(perl bin/centerit.pl < $PARCELLE_ID"_"$PARCELLE_BBOX.ppm)' floodfill' -compress none  $PARCELLE_ID"_"$PARCELLE_BBOX.filled.ppm
 perl bin/redonly.pl < $PARCELLE_ID"_"$PARCELLE_BBOX.filled.ppm > $PARCELLE_ID"_"$PARCELLE_BBOX.red.ppm
-mogrify -resize 500x250 $PARCELLE_ID"_"$PARCELLE_BBOX.red.ppm
-mogrify -resize 1000x500 -fill red -fuzz 75% -draw 'color '$(perl bin/centerit.pl < $PARCELLE_ID"_"$PARCELLE_BBOX.ppm)' floodfill' -compress none   $PARCELLE_ID"_"$PARCELLE_BBOX.red.ppm
-potrace -s $PARCELLE_ID"_"$PARCELLE_BBOX.red.ppm -o $PARCELLE_ID.svg
-potrace -b geojson $PARCELLE_ID"_"$PARCELLE_BBOX.red.ppm -o $PARCELLE_ID.geojson
+potrace -t 5 -O 1 -s $PARCELLE_ID"_"$PARCELLE_BBOX.red.ppm -o $PARCELLE_ID.svg
+potrace -t 5 -O 1 -b geojson $PARCELLE_ID"_"$PARCELLE_BBOX.red.ppm -o $PARCELLE_ID.geojson
 #Convertion des coordonnées lamber vers lat,long
 PARCELLE_LATLONG_X=$(echo $PARCELLE_BBOX | sed 's/,/ /' | sed 's/,.*//' | invproj +proj=lcc +lat_1=47.25 +lat_2=48.75 +lat_0=48 +lon_0=3 +x_0=1700000 +y_0=7200000 +units=m +to +proj=latlong +units=m -f '%.20f' | sed 's/ *//' | sed 's/\t/,/')
 PARCELLE_LATLONG_Y=$(echo $PARCELLE_BBOX | sed 's/,/ /' |sed 's/[^,]*,//' | sed 's/,/ /' | invproj +proj=lcc +lat_1=47.25 +lat_2=48.75 +lat_0=48 +lon_0=3 +x_0=1700000 +y_0=7200000 +units=m +to +proj=latlong +units=m -f '%.12f' | sed 's/ *//' | sed 's/\t/,/')
@@ -57,5 +55,5 @@ echo "PARCELLE_SUPERFICIE: $PARCELLE_SUPERFICIE" >> $PARCELLE_ID.txt
 echo "PARCELLE_ID: $PARCELLE_ID" >> $PARCELLE_ID.txt
 echo "PARCELLE_BBOX_IGN: $PARCELLE_BBOX" >> $PARCELLE_ID".txt"
 echo "PARCELLE_BBOX_LATLONG: "$PARCELLE_LATLONG_X","$PARCELLE_LATLONG_Y >>  $PARCELLE_ID".txt"
-rm $PARCELLE_ID*ppm
+#rm $PARCELLE_ID*ppm
 
