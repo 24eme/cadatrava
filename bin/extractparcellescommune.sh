@@ -1,7 +1,11 @@
 #!/bin/bash
-DEP=$1
-CODE=$2
-COMMUNE=$3
+CODE=$1
+COMMUNE=$2
+if ! test "$CODE" || ! test "$COMMUNE" ; then
+	echo "USAGE: $0 <CODE POSTAL> <COMMUNE>"
+	exit 1
+fi
+DEP="0"$(echo $CODE | sed 's/...$//')
 BASEDIR=..
 mkdir -p cache
 cd cache
