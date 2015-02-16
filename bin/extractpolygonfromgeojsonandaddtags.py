@@ -14,10 +14,15 @@ for line in f.readlines():
     tags[tag[0]] = tag[1][:-1]
 
 #for feature in js['features']:
-feature = js['features'][int(tags['parcelle_lineid'])]
-if feature['properties']['id'] != tags['parcelle_wayid']:
-    print >> sys.stderr, "ERROR: wayid %s doesnot match with meta file (%s)" % (feature['properties']['id'], tags['parcelle_wayid'])
-    sys.exit(1)
+i = int(tags['parcelle_lineid'])
+feature = js['features'][i]
+while feature['properties']['id'] != tags['parcelle_wayid']:
+    i += 1
+    try:
+       feature = js['features'][i]
+    except:
+       print >> sys.stderr, "ERROR: wayid %s doesnot match with meta file (%s)" % (feature['properties']['id'], tags['parcelle_wayid'])
+       sys.exit(1)
 for tag in tags.keys():
     feature['properties'][tag] = tags[tag]
         
