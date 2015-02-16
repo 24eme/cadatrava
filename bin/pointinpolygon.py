@@ -11,7 +11,12 @@ lineid = 0;
 for feature in js['features']:
     feature['geometry']['type'] = 'Polygon'
     feature['geometry']['coordinates'] = [feature['geometry']['coordinates']]
-    polygon = shape(feature['geometry'])
+    try:
+       polygon = shape(feature['geometry'])
+    except AssertionError:
+       continue
+    except ValueError:
+       continue
     selectedpoint1 = None
     selectedpoint2 = None
     for x in np.arange(polygon.bounds[0], polygon.bounds[2], (polygon.bounds[2] - polygon.bounds[0]) / 10):
