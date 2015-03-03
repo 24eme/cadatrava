@@ -21,8 +21,9 @@ if test -s $CACHE; then
 	echo -n "Parcelle OK ($1 $2 $3 $4) : ";
         PARCELLE_REF=$(grep REFERENCE $CACHE | sed 's/.*: //')
 	PARCELLE_SUPERFICIE=$(grep SUPERFICIE $CACHE | sed 's/.*: //')
+	PARCELLE_ADRESSES=$(grep ADRESSES $CACHE | sed 's/.*: //')
 	PARCELLE_ID=$(grep _ID $CACHE | sed 's/.*: //')
-	echo $PARCELLE_REF $PARCELLE_SUPERFICIE $PARCELLE_ID
+	echo "$PARCELLE_REF $PARCELLE_SUPERFICIE $PARCELLE_ID ($PARCELLE_ADRESSES)"
 	exit 0;
 fi
 
@@ -47,8 +48,9 @@ PARCELLE_ID=$(echo $URL | sed 's/.*p=//' | sed 's/&f=.*//')
 if test -s $PARCELLE_ID".txt" ; then
         PARCELLE_REF=$(grep REFERENCE $PARCELLE_ID".txt"  | sed 's/.*: //')
         PARCELLE_SUPERFICIE=$(grep SUPERFICIE $PARCELLE_ID".txt" | sed 's/.*: //')
+        PARCELLE_ADRESSES=$(grep ADRESSES $PARCELLE_ID".txt" | sed 's/.*: //')
         PARCELLE_ID=$(grep _ID $PARCELLE_ID".txt" | sed 's/.*: //')
-	echo $PARCELLE_REF $PARCELLE_SUPERFICIE $PARCELLE_ID
+	echo "$PARCELLE_REF $PARCELLE_SUPERFICIE $PARCELLE_ID ($PARCELLE_ADRESSES)"
         cp $PARCELLE_ID".txt" $CACHE
 	exit;
 fi
@@ -59,7 +61,8 @@ PARCELLE_BBOX=$(echo -n $(grep -A 4 GeoBox /tmp/parcellaire.$$.html  | head -n 1
 curl -s -k -b $COOKIEFILE -c $COOKIEFILE".2" -H 'Referer: http://www.cadastre.gouv.fr/scpc/'$URL -H 'Content-Type: application/xml; charset=UTF-8' -X POST -d '<PARCELLES><PARCELLE>'$PARCELLE_ID'</PARCELLE></PARCELLES>' http://www.cadastre.gouv.fr/scpc/afficherInfosParcelles.do > /tmp/parcellaire.$$.html
 PARCELLE_REF=$(grep strong /tmp/parcellaire.$$.html | head -n 1 | sed 's/.*<strong>//' | sed 's/<.*//')
 PARCELLE_SUPERFICIE=$(grep "tres carr" /tmp/parcellaire.$$.html  | sed 's/[^0-9]*//' | sed 's/ m.*/m2/' | sed 's/[^0-9m]//g')
-echo $PARCELLE_REF $PARCELLE_SUPERFICIE	$PARCELLE_ID 
+PARCELLE_ADRESSES=$(tr '\n' ' ' < /tmp/parcellaire.$$.html | sed 's/<strong>/\n/g' | grep 'Adresse'  | sed 's/Adresse de la parcelle.*//' | sed 's/<[^>]*>//g' | sed 's/\t*//g' | tr '\n' ';')
+echo "$PARCELLE_REF $PARCELLE_SUPERFICIE	$PARCELLE_ID ($PARCELLE_ADRESSES)"
 #Convertion des coordonnées lamber vers lat,long
 PARCELLE_LATLONG_X=$(echo $PARCELLE_BBOX | sed 's/,/ /' | sed 's/,.*//' | invproj +proj=lcc +lat_1=47.25 +lat_2=48.75 +lat_0=48 +lon_0=3 +x_0=1700000 +y_0=7200000 +units=m +to +proj=latlong +units=m -f '%.20f' | sed 's/ *//' | sed 's/\t/,/')
 PARCELLE_LATLONG_Y=$(echo $PARCELLE_BBOX | sed 's/,/ /' |sed 's/[^,]*,//' | sed 's/,/ /' | invproj +proj=lcc +lat_1=47.25 +lat_2=48.75 +lat_0=48 +lon_0=3 +x_0=1700000 +y_0=7200000 +units=m +to +proj=latlong +units=m -f '%.12f' | sed 's/ *//' | sed 's/\t/,/')
@@ -67,6 +70,7 @@ PARCELLE_LATLONG_Y=$(echo $PARCELLE_BBOX | sed 's/,/ /' |sed 's/[^,]*,//' | sed 
 echo "COMMUNE: $1" > $PARCELLE_ID.txt.tmp
 echo "PARCELLE_REFERENCE: $PARCELLE_REF" >> $PARCELLE_ID.txt.tmp
 echo "PARCELLE_SUPERFICIE: $PARCELLE_SUPERFICIE" >> $PARCELLE_ID.txt.tmp
+echo "PARCELLE_ADRESSES: $PARCELLE_ADRESSES" >> $PARCELLE_ID.txt.tmp
 echo "PARCELLE_ID: $PARCELLE_ID" >> $PARCELLE_ID.txt.tmp
 echo "PARCELLE_BBOX_IGN: $PARCELLE_BBOX" >> $PARCELLE_ID".txt.tmp"
 echo "PARCELLE_BBOX_LATLONG: "$PARCELLE_LATLONG_X","$PARCELLE_LATLONG_Y >>  $PARCELLE_ID".txt.tmp"
